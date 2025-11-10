@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cricket Performance Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- React, ReactDOM, Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Styles -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0e1a;
+      color: #f8fafc;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .background-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .header {
+      text-align: center;
+      padding: 60px 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg,
+          rgba(99, 102, 241, 0.1) 0%,
+          rgba(168, 85, 247, 0.1) 50%,
+          rgba(236, 72, 153, 0.1) 100%);
+      z-index: -1;
+    }
+
+    .header h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: #f1f5f9;
+      font-size: 1rem;
+      font-family: 'Inter', monospace;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: #64748b;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .loading-container {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 24px;
+      border: 4px solid rgba(99, 102, 241, 0.2);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-size: 1.125rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .loading-detail {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 50px;
+    }
+
+    .metric-card {
+      padding: 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .metric-card:hover {
+      transform: translateY(-8px);
+      box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .metric-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .metric-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .metric-subtitle {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 400;
+    }
+
+    .navigation {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 16px;
+      padding: 8px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-tab {
+      flex: 1;
+      padding: 16px 24px;
+      background: transparent;
+      color: #94a3b8;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-tab:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tab.active {
+      color: #f1f5f9;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .tournament-content {
+      padding: 40px;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .data-table thead th {
+      background: rgba(15, 23, 42, 0.8);
+      padding: 20px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #e2e8f0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .data-table tbody td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .data-table tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .player-matchup {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 180px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #475569;
+    }
+
+    .avatar-fallback {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: 2px solid #475569;
+    }
+
+    .vs-indicator {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .opponent-name {
+      font-weight: 500;
+      color: #f1f5f9;
+    }
+
+    .stat-number {
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    .wins {
+      color: #22c55e;
+    }
+
+    .losses {
+      color: #ef4444;
+    }
+
+    .total {
+      color: #f1f5f9;
+    }
+
+    .win-rate-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .win-rate-high {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .win-rate-medium {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .win-rate-low {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      color: #fca5a5;
+      margin-bottom: 24px;
+    }
+
+    .player-profile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .player-avatar {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+
+    .player-avatar img,
+    .player-avatar .avatar-fallback {
+      width: 80px;
+      height: 80px;
+    }
+
+    .player-avatar::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #6366f1, #a855f7, #ec4899);
+      z-index: -1;
+      animation: rotate 3s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .player-name {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin: 0;
+    }
+
+    .timestamp {
+      color: #94a3b8;
+      font-size: 1rem;
+      font-weight: 400;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 12px;
+      }
+
+      .header {
+        padding: 40px 20px;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+      }
+
+      .navigation {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .nav-tab {
+        text-align: center;
+      }
+
+      .tournament-content {
+        padding: 20px;
+      }
+
+      .data-table {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+
+  <!-- React Application -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const API_URL = 'https://ibc-backend-pe-prod-apis.ibcricket.com/api/ib_match/matches/get/';
+
+    // Main App Component
+    function App() {
+      const [accessToken, setAccessToken] = useState('');
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [loading, setLoading] = useState(false);
+      const [loadingStatus, setLoadingStatus] = useState('');
+      const [error, setError] = useState('');
+      const [matchData, setMatchData] = useState([]);
+      const [stats, setStats] = useState(null);
+      const [activeTab, setActiveTab] = useState('all');
+      const [pitchFilter, setPitchFilter] = useState('all');
+      const [stadiumFilter, setStadiumFilter] = useState('all');
+      const [amountFilter, setAmountFilter] = useState('all');
+
+      const handleLogin = async () => {
+        if (!accessToken.trim()) {
+          setError('Please enter your access token');
+          return;
+        }
+
+        setLoading(true);
+        setError('');
+        setLoadingStatus('Fetching match data...');
+
+        try {
+          const allMatches = await fetchAllMatches(accessToken);
+          setMatchData(allMatches);
+
+          setLoadingStatus('Analyzing statistics...');
+          const calculatedStats = calculateStatistics(allMatches);
+          setStats(calculatedStats);
+
+          setIsAuthenticated(true);
+        } catch (err) {
+          setError(err.message || 'Failed to fetch data. Please check your access token.');
+        } finally {
+          setLoading(false);
+          setLoadingStatus('');
+        }
+      };
+
+      const fetchAllMatches = async (token) => {
+        const allMatches = [];
+
+
+        try {
+          // Fetch first batch
+          setLoadingStatus(`Fetching matches (batch 1)...`);
+          const batch1 = await fetchMatches(token, 0, 200);
+          allMatches.push(...batch1);
+
+          // Fetch second batch (offset 200, length 10) as specified
+
+          setLoadingStatus(`Fetching matches (batch 2)...`);
+          const batch2 = await fetchMatches(token, 200, 10);
+          if (batch2.length > 0) {
+            allMatches.push(...batch2);
+          }
+
+
+          return allMatches;
+        } catch (err) {
+          throw new Error('Failed to fetch matches: ' + err.message);
+        }
+      };
+
+      const fetchMatches = async (token, offset, length) => {
+        const requestData = {
+          data: JSON.stringify(JSON.stringify({
+            length: length,
+            offset: offset,
+            match_status: "COMPLETED",
+            match_ids: [],
+            game_id: 3,
+            match_type: "TOURNAMENT",
+            tournament_id: -1
+          })),
+          clientKeyDetailsId: 1
+        };
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.match_details || [];
+      };
+
+      const calculateStatistics = (matches) => {
+        const playerData = {
+          playerId: null,
+          playerName: null,
+          playerPicUrl: '',
+          opponentPics: {}
+        };
+
+        const allStats = {};
+        const tournamentStats = {
+          'iBC PRO 360': {},
+          'iBC 360': {},
+          'Other': {}
+        };
+
+        const pitchTypes = new Set();
+        const stadiums = new Set();
+        const pitchStats = {};
+        const stadiumStats = {};
+        const subTournamentStats = {};
+        const tournamentAmounts = new Set();
+
+        matches.forEach(match => {
+          if (match.status !== 'COMPLETED' || match.match_mode !== 'DUAL_PLAYER') return;
+
+          const matchUserDetails = match.match_user_details;
+          if (!matchUserDetails) return;
+
+          const users = matchUserDetails.users || [];
+          if (users.length !== 2) return;
+
+          // Get the requested user ID (the owner of the access token)
+          const requestedUserId = matchUserDetails.requested_user_id;
+          if (!requestedUserId) return;
+
+          // Set player data from requested user
+          if (!playerData.playerId) {
+            playerData.playerId = requestedUserId;
+            const requestedUser = users.find(u => u.user_id === requestedUserId);
+            if (requestedUser) {
+              playerData.playerName = requestedUser.name;
+              playerData.playerPicUrl = requestedUser.pic_url || '';
+            }
+          }
+
+          const myself = users.find(u => u.user_id === requestedUserId);
+          const opponent = users.find(u => u.user_id !== requestedUserId);
+
+          if (!myself || !opponent) return;
+
+          const opponentName = opponent.name;
+          const myResult = myself.result;
+
+          // Store opponent pic
+          if (!playerData.opponentPics[opponentName]) {
+            playerData.opponentPics[opponentName] = opponent.pic_url || '';
+          }
+
+          // Extract game details (pitch type, stadium, weather)
+          let pitchType = 'Unknown';
+          let stadiumName = 'Unknown';
+          let weatherCondition = 'Unknown';
+
+          try {
+            const gameDetailsBlob = JSON.parse(match.game_details_blob || '{}');
+            const basicDetails = gameDetailsBlob.basic_match_details || {};
+            pitchType = basicDetails.pitch_type || 'Unknown';
+            stadiumName = basicDetails.stadium_details?.display_name || basicDetails.stadium_details?.name || 'Unknown';
+            weatherCondition = basicDetails.weather_condition || 'Unknown';
+          } catch (e) {
+            // If parsing fails, use defaults
+          }
+
+          pitchTypes.add(pitchType);
+          stadiums.add(stadiumName);
+
+          // Get tournament type and amount
+          const tournamentName = match.tournament_match_details?.tournament_type_details?.tournament_name || 'Unknown';
+          let tournamentType = 'Other';
+          let tournamentAmount = 'Unknown';
+
+          if (tournamentName.includes('iBC PRO 360')) {
+            tournamentType = 'iBC PRO 360';
+            // Extract amount (250, 500, 1000)
+            if (tournamentName.includes('250')) tournamentAmount = '250';
+            else if (tournamentName.includes('500')) tournamentAmount = '500';
+            else if (tournamentName.includes('1000')) tournamentAmount = '1000';
+          } else if (tournamentName.includes('iBC 360') && !tournamentName.includes('iBC PRO 360')) {
+            tournamentType = 'iBC 360';
+            // Extract amount (250, 500, 1000)
+            if (tournamentName.includes('250')) tournamentAmount = '250';
+            else if (tournamentName.includes('500')) tournamentAmount = '500';
+            else if (tournamentName.includes('1000')) tournamentAmount = '1000';
+          }
+
+          if (tournamentAmount !== 'Unknown') {
+            tournamentAmounts.add(tournamentAmount);
+          }
+
+          // Create sub-tournament key (e.g., "iBC PRO 360 - 250")
+          const subTournamentKey = tournamentAmount !== 'Unknown'
+            ? `${tournamentType} - ${tournamentAmount}`
+            : tournamentType;
+
+          // Initialize stats for all categories
+          if (!allStats[opponentName]) {
+            allStats[opponentName] = { wins: 0, losses: 0, total: 0 };
+          }
+          if (!tournamentStats[tournamentType][opponentName]) {
+            tournamentStats[tournamentType][opponentName] = { wins: 0, losses: 0, total: 0 };
+          }
+          if (!subTournamentStats[subTournamentKey]) {
+            subTournamentStats[subTournamentKey] = {};
+          }
+          if (!subTournamentStats[subTournamentKey][opponentName]) {
+            subTournamentStats[subTournamentKey][opponentName] = { wins: 0, losses: 0, total: 0 };
+          }
+          if (!pitchStats[pitchType]) {
+            pitchStats[pitchType] = {};
+          }
+          if (!pitchStats[pitchType][opponentName]) {
+            pitchStats[pitchType][opponentName] = { wins: 0, losses: 0, total: 0 };
+          }
+          if (!stadiumStats[stadiumName]) {
+            stadiumStats[stadiumName] = {};
+          }
+          if (!stadiumStats[stadiumName][opponentName]) {
+            stadiumStats[stadiumName][opponentName] = { wins: 0, losses: 0, total: 0 };
+          }
+
+          // Update stats
+          allStats[opponentName].total++;
+          tournamentStats[tournamentType][opponentName].total++;
+          subTournamentStats[subTournamentKey][opponentName].total++;
+          pitchStats[pitchType][opponentName].total++;
+          stadiumStats[stadiumName][opponentName].total++;
+
+          if (myResult === 'WIN') {
+            allStats[opponentName].wins++;
+            tournamentStats[tournamentType][opponentName].wins++;
+            subTournamentStats[subTournamentKey][opponentName].wins++;
+            pitchStats[pitchType][opponentName].wins++;
+            stadiumStats[stadiumName][opponentName].wins++;
+          } else if (myResult === 'LOSS') {
+            allStats[opponentName].losses++;
+            tournamentStats[tournamentType][opponentName].losses++;
+            subTournamentStats[subTournamentKey][opponentName].losses++;
+            pitchStats[pitchType][opponentName].losses++;
+            stadiumStats[stadiumName][opponentName].losses++;
+          }
+        });
+
+        return {
+          playerData,
+          allStats,
+          tournamentStats,
+          subTournamentStats,
+          pitchStats,
+          stadiumStats,
+          pitchTypes: Array.from(pitchTypes).sort(),
+          stadiums: Array.from(stadiums).sort(),
+          tournamentAmounts: Array.from(tournamentAmounts).sort((a, b) => parseInt(a) - parseInt(b))
+        };
+      };
+
+      if (loading) {
+        return (
+          <div className="background-pattern"></div>,
+          <div className="container">
+            <div className="glass-card header">
+              <h1><i className="fas fa-cricket-bat-ball"></i> Cricket Performance Analytics</h1>
+            </div>
+            <div className="loading-container">
+              <div className="spinner"></div>
+              <div className="loading-text">{loadingStatus}</div>
+              <div className="loading-detail">Please wait while we process your data...</div>
+            </div>
+          </div>
+        );
+      }
+
+      if (!isAuthenticated) {
+        return (
+          <>
+            <div className="background-pattern"></div>
+            <div className="container">
+              <div className="glass-card header">
+                <h1><i className="fas fa-cricket-bat-ball"></i> Cricket Performance Analytics</h1>
+                <p className="timestamp">Analyze your head-to-head cricket statistics</p>
+              </div>
+
+              <div className="glass-card auth-form">
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="fas fa-key"></i> Access Token
+                  </label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Paste your Bearer token here..."
+                    value={accessToken}
+                    onChange={(e) => setAccessToken(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  />
+                </div>
+
+                {error && (
+                  <div className="error-message">
+                    <i className="fas fa-exclamation-circle"></i> {error}
+                  </div>
+                )}
+
+                <button
+                  className="btn"
+                  onClick={handleLogin}
+                  disabled={loading}
+                >
+                  <i className="fas fa-sign-in-alt"></i> Analyze My Stats
+                </button>
+              </div>
+            </div>
+          </>
+        );
+      }
+
+      return (
+        <>
+          <div className="background-pattern"></div>
+          <Dashboard
+            stats={stats}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            pitchFilter={pitchFilter}
+            setPitchFilter={setPitchFilter}
+            stadiumFilter={stadiumFilter}
+            setStadiumFilter={setStadiumFilter}
+            amountFilter={amountFilter}
+            setAmountFilter={setAmountFilter}
+          />
+        </>
+      );
+    }
+
+    // Dashboard Component
+    function Dashboard({ stats, activeTab, setActiveTab, pitchFilter, setPitchFilter, stadiumFilter, setStadiumFilter, amountFilter, setAmountFilter }) {
+      const { playerData, allStats, tournamentStats, subTournamentStats, pitchStats, stadiumStats, pitchTypes, stadiums, tournamentAmounts } = stats;
+
+      // Get filtered stats based on pitch and stadium filters
+      const getFilteredStats = (statsObj, tournamentType) => {
+        let baseStats = statsObj;
+
+        // Apply tournament amount filter first if applicable
+        if (amountFilter !== 'all' && tournamentType !== 'all') {
+          const subKey = `${tournamentType} - ${amountFilter}`;
+          baseStats = subTournamentStats[subKey] || {};
+        }
+
+        // Then apply pitch/stadium filters
+        if (pitchFilter === 'all' && stadiumFilter === 'all') {
+          return baseStats;
+        }
+
+        if (pitchFilter !== 'all' && stadiumFilter === 'all') {
+          // Filter by pitch only
+          return pitchStats[pitchFilter] || {};
+        } else if (pitchFilter === 'all' && stadiumFilter !== 'all') {
+          // Filter by stadium only
+          return stadiumStats[stadiumFilter] || {};
+        } else {
+          // Filter by both pitch and stadium - need to combine
+          // This requires re-processing matches, for now show pitch filter
+          return pitchStats[pitchFilter] || {};
+        }
+      };
+
+      const getSummary = (statsObj) => {
+        const opponents = Object.entries(statsObj);
+        const totalMatches = opponents.reduce((sum, [_, s]) => sum + s.total, 0);
+        const totalWins = opponents.reduce((sum, [_, s]) => sum + s.wins, 0);
+        const totalLosses = opponents.reduce((sum, [_, s]) => sum + s.losses, 0);
+        const winRate = totalMatches > 0 ? (totalWins / totalMatches * 100) : 0;
+
+        return { totalMatches, totalWins, totalLosses, winRate, opponentsCount: opponents.length };
+      };
+
+      // Get stats based on active tab
+      let currentStats = allStats;
+      let currentTournamentType = 'all';
+      if (activeTab === 'pro') {
+        currentStats = tournamentStats['iBC PRO 360'];
+        currentTournamentType = 'iBC PRO 360';
+      } else if (activeTab === 'bc') {
+        currentStats = tournamentStats['iBC 360'];
+        currentTournamentType = 'iBC 360';
+      }
+
+      // Apply pitch/stadium/amount filters
+      const filteredStats = getFilteredStats(currentStats, currentTournamentType);
+
+      const allSummary = getSummary(filteredStats);
+      const proSummary = getSummary(getFilteredStats(tournamentStats['iBC PRO 360'], 'iBC PRO 360'));
+      const bcSummary = getSummary(getFilteredStats(tournamentStats['iBC 360'], 'iBC 360')); return (
+        <div className="container">
+          <div className="glass-card header">
+            <h1><i className="fas fa-cricket-bat-ball"></i> Cricket Performance Analytics</h1>
+            <div className="player-profile">
+              <div className="player-avatar">
+                {playerData.playerPicUrl ? (
+                  <img src={playerData.playerPicUrl} alt={playerData.playerName} />
+                ) : (
+                  <div className="avatar-fallback">{playerData.playerName?.[0] || 'P'}</div>
+                )}
+              </div>
+              <h2 className="player-name">{playerData.playerName}</h2>
+            </div>
+            <p className="timestamp"><i className="far fa-clock"></i> Generated on {new Date().toLocaleString()}</p>
+          </div>
+
+          <div className="summary-grid">
+            <div className="glass-card metric-card">
+              <div className="metric-icon"><i className="fas fa-gamepad"></i></div>
+              <div className="metric-label">Total Matches</div>
+              <div className="metric-value">{allSummary.totalMatches}</div>
+              <div className="metric-subtitle">Completed Games</div>
+            </div>
+            <div className="glass-card metric-card">
+              <div className="metric-icon"><i className="fas fa-trophy"></i></div>
+              <div className="metric-label">Victories</div>
+              <div className="metric-value">{allSummary.totalWins}</div>
+              <div className="metric-subtitle">Successful Matches</div>
+            </div>
+            <div className="glass-card metric-card">
+              <div className="metric-icon"><i className="fas fa-chart-line"></i></div>
+              <div className="metric-label">Win Rate</div>
+              <div className="metric-value">{allSummary.winRate.toFixed(1)}%</div>
+              <div className="metric-subtitle">Success Percentage</div>
+            </div>
+            <div className="glass-card metric-card">
+              <div className="metric-icon"><i className="fas fa-users"></i></div>
+              <div className="metric-label">Opponents</div>
+              <div className="metric-value">{allSummary.opponentsCount}</div>
+              <div className="metric-subtitle">Unique Players</div>
+            </div>
+          </div>
+
+          <div className="navigation">
+            <button
+              className={`nav-tab ${activeTab === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveTab('all')}
+            >
+              <i className="fas fa-chart-bar"></i> All Tournaments
+            </button>
+            <button
+              className={`nav-tab ${activeTab === 'pro' ? 'active' : ''}`}
+              onClick={() => setActiveTab('pro')}
+            >
+              <i className="fas fa-star"></i> iBC PRO 360
+            </button>
+            <button
+              className={`nav-tab ${activeTab === 'bc' ? 'active' : ''}`}
+              onClick={() => setActiveTab('bc')}
+            >
+              <i className="fas fa-target"></i> iBC 360
+            </button>
+          </div>
+
+          <div className="glass-card" style={{ padding: '20px', marginBottom: '40px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+              {(activeTab === 'pro' || activeTab === 'bc') && (
+                <div>
+                  <label className="form-label">
+                    <i className="fas fa-coins"></i> Tournament Points
+                  </label>
+                  <select
+                    className="form-input"
+                    value={amountFilter}
+                    onChange={(e) => setAmountFilter(e.target.value)}
+                    style={{ padding: '12px' }}
+                  >
+                    <option value="all">All Amounts</option>
+                    {tournamentAmounts.map(amount => (
+                      <option key={amount} value={amount}>{amount}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="form-label">
+                  <i className="fas fa-seedling"></i> Pitch Type
+                </label>
+                <select
+                  className="form-input"
+                  value={pitchFilter}
+                  onChange={(e) => setPitchFilter(e.target.value)}
+                  style={{ padding: '12px' }}
+                >
+                  <option value="all">All Pitches</option>
+                  {pitchTypes.map(pitch => (
+                    <option key={pitch} value={pitch}>{pitch}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">
+                  <i className="fas fa-building"></i> Stadium
+                </label>
+                <select
+                  className="form-input"
+                  value={stadiumFilter}
+                  onChange={(e) => setStadiumFilter(e.target.value)}
+                  style={{ padding: '12px' }}
+                >
+                  <option value="all">All Stadiums</option>
+                  {stadiums.map(stadium => (
+                    <option key={stadium} value={stadium}>{stadium}</option>
+                  ))}
+                </select>
+              </div>
+              {(pitchFilter !== 'all' || stadiumFilter !== 'all' || amountFilter !== 'all') && (
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button
+                    className="btn"
+                    onClick={() => { setPitchFilter('all'); setStadiumFilter('all'); setAmountFilter('all'); }}
+                    style={{ background: 'rgba(239, 68, 68, 0.8)', padding: '12px 24px', fontSize: '0.9rem' }}
+                  >
+                    <i className="fas fa-times"></i> Clear Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>          {activeTab === 'all' && (
+            <div className="glass-card tournament-content">
+              <h2 className="section-title">
+                <i className="fas fa-chart-bar"></i>
+                Complete Performance Overview
+              </h2>
+              <StatsTable
+                stats={filteredStats}
+                playerData={playerData}
+              />
+            </div>
+          )}
+
+          {activeTab === 'pro' && (
+            <div className="glass-card tournament-content">
+              <h2 className="section-title">
+                <i className="fas fa-star"></i>
+                iBC PRO 360 Tournament Analysis
+              </h2>
+              <div className="summary-grid" style={{ marginBottom: '30px' }}>
+                <div className="glass-card metric-card">
+                  <div className="metric-icon"><i className="fas fa-gamepad"></i></div>
+                  <div className="metric-label">Matches</div>
+                  <div className="metric-value">{proSummary.totalMatches}</div>
+                </div>
+                <div className="glass-card metric-card">
+                  <div className="metric-icon"><i className="fas fa-trophy"></i></div>
+                  <div className="metric-label">Wins</div>
+                  <div className="metric-value">{proSummary.totalWins}</div>
+                </div>
+                <div className="glass-card metric-card">
+                  <div className="metric-icon"><i className="fas fa-chart-line"></i></div>
+                  <div className="metric-label">Win Rate</div>
+                  <div className="metric-value">{proSummary.winRate.toFixed(1)}%</div>
+                </div>
+              </div>
+              <StatsTable
+                stats={filteredStats}
+                playerData={playerData}
+              />
+            </div>
+          )}
+
+          {activeTab === 'bc' && (
+            <div className="glass-card tournament-content">
+              <h2 className="section-title">
+                <i className="fas fa-target"></i>
+                iBC 360 Tournament Analysis
+              </h2>
+              <div className="summary-grid" style={{ marginBottom: '30px' }}>
+                <div className="glass-card metric-card">
+                  <div className="metric-icon"><i className="fas fa-gamepad"></i></div>
+                  <div className="metric-label">Matches</div>
+                  <div className="metric-value">{bcSummary.totalMatches}</div>
+                </div>
+                <div className="glass-card metric-card">
+                  <div className="metric-icon"><i className="fas fa-trophy"></i></div>
+                  <div className="metric-label">Wins</div>
+                  <div className="metric-value">{bcSummary.totalWins}</div>
+                </div>
+                <div className="glass-card metric-card">
+                  <div className="metric-icon"><i className="fas fa-chart-line"></i></div>
+                  <div className="metric-label">Win Rate</div>
+                  <div className="metric-value">{bcSummary.winRate.toFixed(1)}%</div>
+                </div>
+              </div>
+              <StatsTable
+                stats={filteredStats}
+                playerData={playerData}
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Stats Table Component
+    function StatsTable({ stats, playerData }) {
+      const sortedStats = Object.entries(stats).sort((a, b) => b[1].total - a[1].total);
+
+      if (sortedStats.length === 0) {
+        return (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            <i className="fas fa-search" style={{ fontSize: '3rem', marginBottom: '16px' }}></i>
+            <h3>No Match Data Available</h3>
+            <p>No matches found for this tournament category.</p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th><i className="fas fa-users"></i> Matchup</th>
+                <th><i className="fas fa-user"></i> Opponent</th>
+                <th><i className="fas fa-gamepad"></i> Total</th>
+                <th><i className="fas fa-trophy"></i> Wins</th>
+                <th><i className="fas fa-times-circle"></i> Losses</th>
+                <th><i className="fas fa-chart-line"></i> Win Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedStats.map(([opponent, s]) => {
+                const winRate = s.total > 0 ? (s.wins / s.total * 100) : 0;
+                const rateClass = winRate >= 70 ? 'win-rate-high' :
+                  winRate >= 40 ? 'win-rate-medium' : 'win-rate-low';
+                const opponentPic = playerData.opponentPics[opponent] || '';
+
+                return (
+                  <tr key={opponent}>
+                    <td>
+                      <div className="player-matchup">
+                        {playerData.playerPicUrl ? (
+                          <img src={playerData.playerPicUrl} className="avatar" alt={playerData.playerName} />
+                        ) : (
+                          <div className="avatar-fallback">{playerData.playerName?.[0] || 'P'}</div>
+                        )}
+                        <span className="vs-indicator">VS</span>
+                        {opponentPic ? (
+                          <img src={opponentPic} className="avatar" alt={opponent} />
+                        ) : (
+                          <div className="avatar-fallback">{opponent[0] || 'O'}</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="opponent-name">{opponent}</td>
+                    <td className="stat-number total">{s.total}</td>
+                    <td className="stat-number wins">{s.wins}</td>
+                    <td className="stat-number losses">{s.losses}</td>
+                    <td>
+                      <span className={`win-rate-badge ${rateClass}`}>
+                        {winRate.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    // Render App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+
+</html>
