@@ -1,0 +1,253 @@
+================================================================================
+🏏 CRICKET HEAD-TO-HEAD DETAILED REPORT - PRASANNA NIVAS
+================================================================================
+Generated: November 10, 2025 at 05:55 PM
+================================================================================
+
+📋 OVERALL SUMMARY
+----------------------------------------
+Total Matches: 324
+Total Wins: 240
+Total Losses: 71
+Overall Win Rate: 74.1%
+Unique Opponents: 227
+
+🏆 OTHER SUMMARY
+----------------------------------------
+Matches: 324
+Wins: 240
+Losses: 71
+Win Rate: 74.1%
+Opponents: 227
+
+📊 DETAILED OPPONENT BREAKDOWN (ALL TOURNAMENTS)
+------------------------------------------------------------
+Opponent                       W     L     Total   Win%    
+------------------------------------------------------------
+GoWinNow                       2     8     10      20.0   %
+chiku0215                      2     7     9       22.2   %
+Rishab Prashanth               4     3     7       57.1   %
+Rachit3069                     4     2     6       66.7   %
+pu2wilson                      4     1     5       80.0   %
+NiTiN                          4     0     4       100.0  %
+Nikhil                         2     2     4       50.0   %
+aravindun                      3     1     4       75.0   %
+Arjunak23                      3     1     4       75.0   %
+emms.shergill                  2     2     4       50.0   %
+VK                             0     3     3       0.0    %
+Faisal hayat                   3     0     3       100.0  %
+taran2388                      3     0     3       100.0  %
+Boycott Geoffrey               3     0     3       100.0  %
+Karanveer Singh                3     0     3       100.0  %
+poolmaster                     2     0     2       100.0  %
+Jyothi Swaroop                 2     0     2       100.0  %
+Keerthi G                      2     0     2       100.0  %
+Sukhu75                        2     0     2       100.0  %
+Animal                         0     1     2       0.0    %
+Rashesh                        1     1     2       50.0   %
+Vishal dhanala                 2     0     2       100.0  %
+Fetalice                       2     0     2       100.0  %
+Gonnabathula                   0     2     2       0.0    %
+kAiZZeR 007                    2     0     2       100.0  %
+Abhitiwa                       2     0     2       100.0  %
+Zain Sarwar                    2     0     2       100.0  %
+quick-bravery                  2     0     2       100.0  %
+Anumala                        2     0     2       100.0  %
+Jaitik Berawala                0     2     2       0.0    %
+WhoGamer                       1     1     2       50.0   %
+Haree                          2     0     2       100.0  %
+IshanOshin                     2     0     2       100.0  %
+Gary Belcher                   2     0     2       100.0  %
+Yogesh Shrivastava             2     0     2       100.0  %
+Shikhar                        2     0     2       100.0  %
+Junadkhan                      2     0     2       100.0  %
+farazshamim9                   2     0     2       100.0  %
+akarsh86                       2     0     2       100.0  %
+saketh                         2     0     2       100.0  %
+GameParade8258_YT              1     1     2       50.0   %
+Devil                          2     0     2       100.0  %
+ADITHYA GOURIBHATLA            2     0     2       100.0  %
+Santhosh Gujje                 2     0     2       100.0  %
+Mohammad Ahyan                 2     0     2       100.0  %
+Ikram Khan                     2     0     2       100.0  %
+K2L                            1     1     2       50.0   %
+ammarkhan87                    2     0     2       100.0  %
+fas                            1     1     2       50.0   %
+SamP                           1     1     2       50.0   %
+Gautam Khandige                2     0     2       100.0  %
+Ram                            2     0     2       100.0  %
+Numan Sarfraz                  2     0     2       100.0  %
+Sohaib Arshad                  2     0     2       100.0  %
+bizwiz00                       2     0     2       100.0  %
+Scott Thompson                 1     0     1       100.0  %
+anveshkolli                    1     0     1       100.0  %
+Dr VIGHNESH B                  0     1     1       0.0    %
+Karthik Kosuri                 1     0     1       100.0  %
+Kp                             0     1     1       0.0    %
+Pavan Singh                    0     1     1       0.0    %
+Jaadooo                        0     1     1       0.0    %
+Salmankhan24                   1     0     1       100.0  %
+Abeer                          1     0     1       100.0  %
+Nii                            1     0     1       100.0  %
+Rahul Badhan                   1     0     1       100.0  %
+Avanesh                        1     0     1       100.0  %
+Sai Kittu                      1     0     1       100.0  %
+Srinunaidu                     0     0     1       0.0    %
+Salman Ayub                    0     0     1       0.0    %
+ArunJalanila                   0     0     1       0.0    %
+Krishnakumar K                 0     1     1       0.0    %
+AnythingIsPossible             0     1     1       0.0    %
+NEW ZEALAND                    0     0     1       0.0    %
+Varshnem                       0     0     1       0.0    %
+Raj Patil                      0     0     1       0.0    %
+Shoaib                         0     0     1       0.0    %
+KiranDevara                    0     0     1       0.0    %
+Krishna Prashanth              0     1     1       0.0    %
+HighestSaint                   1     0     1       100.0  %
+AJ                             1     0     1       100.0  %
+RiteshSbgIndia                 1     0     1       100.0  %
+Adeep kumar sahoo              0     1     1       0.0    %
+AjgarJurraat                   1     0     1       100.0  %
+aviroyal                       1     0     1       100.0  %
+Alishan Abdul Qadir            1     0     1       100.0  %
+Ajaura                         1     0     1       100.0  %
+SinghTaran                     1     0     1       100.0  %
+VR Meta                        1     0     1       100.0  %
+Nkmaharana                     1     0     1       100.0  %
+Munawar                        1     0     1       100.0  %
+Justin Davies                  1     0     1       100.0  %
+Haider                         1     0     1       100.0  %
+shri                           1     0     1       100.0  %
+Shrey                          1     0     1       100.0  %
+Donz Rohilla                   1     0     1       100.0  %
+A1andominic                    1     0     1       100.0  %
+KYADASI SRIKANTH               1     0     1       100.0  %
+Zeeshan                        0     1     1       0.0    %
+Dev                            1     0     1       100.0  %
+N@N!                           1     0     1       100.0  %
+Kunal                          1     0     1       100.0  %
+GalacticParakeet3590           1     0     1       100.0  %
+Vivek Venugopal                1     0     1       100.0  %
+Wizheart                       1     0     1       100.0  %
+Dinosa_VR                      1     0     1       100.0  %
+Pratik Chandarana              1     0     1       100.0  %
+manjunath0591                  1     0     1       100.0  %
+Tharshith                      1     0     1       100.0  %
+Powerplay6100                  1     0     1       100.0  %
+Hamza                          1     0     1       100.0  %
+AshMc1                         1     0     1       100.0  %
+uzair52                        1     0     1       100.0  %
+martinc41                      1     0     1       100.0  %
+ai.x                           1     0     1       100.0  %
+sumair                         1     0     1       100.0  %
+DireKirby                      0     1     1       0.0    %
+Dax                            1     0     1       100.0  %
+Faheem                         1     0     1       100.0  %
+MJ                             0     1     1       0.0    %
+Mike Andrews                   1     0     1       100.0  %
+Subhanazaan                    1     0     1       100.0  %
+Sai                            1     0     1       100.0  %
+Veekshith4                     1     0     1       100.0  %
+Adilmirza                      1     0     1       100.0  %
+timephilospher13               1     0     1       100.0  %
+prudhiviraj                    1     0     1       100.0  %
+zubair16                       1     0     1       100.0  %
+Shikhar Sharma                 1     0     1       100.0  %
+Janjo                          1     0     1       100.0  %
+Puneet                         0     1     1       0.0    %
+Boora                          1     0     1       100.0  %
+Venomvertex24                  1     0     1       100.0  %
+Viraj Sankholkar               1     0     1       100.0  %
+Finalstatue                    1     0     1       100.0  %
+AminSajwani17                  1     0     1       100.0  %
+harsha425                      1     0     1       100.0  %
+GoldBadger2650                 1     0     1       100.0  %
+Muhammad Janjua                1     0     1       100.0  %
+Parth Patel                    0     0     1       0.0    %
+Zackahmed2020                  0     1     1       0.0    %
+Narayanharimittal              0     1     1       0.0    %
+Aalok                          0     0     1       0.0    %
+Izhar Ali                      0     1     1       0.0    %
+Mudi                           0     0     1       0.0    %
+Bharath Simha Reddy Bobbala    0     1     1       0.0    %
+Isco71                         0     0     1       0.0    %
+Arshpreet Singh                1     0     1       100.0  %
+మధు కిరణ్ తుమ్మిడి             0     1     1       0.0    %
+Mehmood                        1     0     1       100.0  %
+Vishal                         1     0     1       100.0  %
+LaughingMacaw9638              0     1     1       0.0    %
+Salim Syed                     0     1     1       0.0    %
+Garvish                        0     1     1       0.0    %
+Shayak Mukherjee               0     1     1       0.0    %
+wajihhaider1                   0     1     1       0.0    %
+Jack                           1     0     1       100.0  %
+Srikanth Mamidi                1     0     1       100.0  %
+Anil Roy                       1     0     1       100.0  %
+Morne Herselman                1     0     1       100.0  %
+Atul Gupta                     1     0     1       100.0  %
+Lets workout                   1     0     1       100.0  %
+Arslan Cheema                  1     0     1       100.0  %
+Sheikh0300                     1     0     1       100.0  %
+amazing11                      1     0     1       100.0  %
+CS COATs                       1     0     1       100.0  %
+James Middleton                1     0     1       100.0  %
+Imran Shariff                  1     0     1       100.0  %
+Jigar Adhiya                   1     0     1       100.0  %
+SAi Kumar Reddy                1     0     1       100.0  %
+Deepuppal                      1     0     1       100.0  %
+Rohan                          1     0     1       100.0  %
+Jeevan                         0     1     1       0.0    %
+Another Cricketer              1     0     1       100.0  %
+musascontact                   1     0     1       100.0  %
+deepu_vyshu                    1     0     1       100.0  %
+Stealthemu                     1     0     1       100.0  %
+Ali                            1     0     1       100.0  %
+Right_handed_batsman           1     0     1       100.0  %
+Ali110                         1     0     1       100.0  %
+Santosh                        1     0     1       100.0  %
+SadhiqCMA                      1     0     1       100.0  %
+Stone Cold316                  1     0     1       100.0  %
+vrmaha8055                     1     0     1       100.0  %
+Dushyanth                      1     0     1       100.0  %
+Iceman                         0     1     1       0.0    %
+Anil Solanki                   1     0     1       100.0  %
+FriendlyFlamingo9461           1     0     1       100.0  %
+Mandy Mandanna                 1     0     1       100.0  %
+Albert                         1     0     1       100.0  %
+DataDragon                     1     0     1       100.0  %
+mnfumatiya                     1     0     1       100.0  %
+San Van                        1     0     1       100.0  %
+Barney                         1     0     1       100.0  %
+rishirocks22                   1     0     1       100.0  %
+FrostedNarwhal4218             1     0     1       100.0  %
+Nishant Kumar                  0     1     1       0.0    %
+RONAK                          0     1     1       0.0    %
+Meer03                         1     0     1       100.0  %
+Akshar1127                     1     0     1       100.0  %
+Niles                          1     0     1       100.0  %
+Asif Eqbal                     0     1     1       0.0    %
+Fucuras                        1     0     1       100.0  %
+Adeel Prasla                   1     0     1       100.0  %
+Harsh                          0     1     1       0.0    %
+Kinshuk Kashyap                1     0     1       100.0  %
+nxy6608                        1     0     1       100.0  %
+CyyM07                         1     0     1       100.0  %
+AJ-Abhi                        1     0     1       100.0  %
+Mustafa Hussain                1     0     1       100.0  %
+BazBall                        0     1     1       0.0    %
+Steve                          1     0     1       100.0  %
+Haleyangilella                 1     0     1       100.0  %
+HarshaPopuri                   1     0     1       100.0  %
+Shashank Ubarhande             1     0     1       100.0  %
+Praneeth                       1     0     1       100.0  %
+Mumar19                        1     0     1       100.0  %
+Vidit Chopra                   1     0     1       100.0  %
+Mayank Dungarwal               0     1     1       0.0    %
+Regor024                       1     0     1       100.0  %
+Mohitv90                       1     0     1       100.0  %
+Amna                           1     0     1       100.0  %
+Abhya73                        1     0     1       100.0  %
+Sumit                          1     0     1       100.0  %
+JumpingWren3304                1     0     1       100.0  %
+GoofyTapir5006                 1     0     1       100.0  %
+Chan8690                       1     0     1       100.0  %
