@@ -545,6 +545,7 @@
       const [stadiumFilter, setStadiumFilter] = useState('all');
       const [amountFilter, setAmountFilter] = useState('all');
       const [dayNightFilter, setDayNightFilter] = useState('all');
+      const [chaseBatFirstFilter, setChaseBatFirstFilter] = useState('all');
 
       const handleLogin = async () => {
         if (!accessToken.trim()) {
@@ -824,14 +825,65 @@
           try {
             // Find the requested user's game_stats_blob
             const requestedUserData = users.find(u => u.user_id === requestedUserId);
+            const opponentUserData = users.find(u => u.user_id !== requestedUserId);
+
             if (!requestedUserData || !requestedUserData.game_stats_blob) return;
+            if (!opponentUserData || !opponentUserData.game_stats_blob) return;
 
             const gameStatsBlob = JSON.parse(requestedUserData.game_stats_blob);
-            const matchInningsScoreCard = gameStatsBlob.match_innings_score_card;
+            const opponentGameStatsBlob = JSON.parse(opponentUserData.game_stats_blob);
 
-            if (matchInningsScoreCard && matchInningsScoreCard.match_innings_stats) {
+            const matchInningsScoreCard = gameStatsBlob.match_innings_score_card;
+            const opponentMatchInningsScoreCard = opponentGameStatsBlob.match_innings_score_card;
+
+            if (matchInningsScoreCard && matchInningsScoreCard.match_innings_stats &&
+              opponentMatchInningsScoreCard && opponentMatchInningsScoreCard.match_innings_stats) {
+
               const overallStats = matchInningsScoreCard.match_innings_stats.overall_stats || {};
               const batsScoreCard = matchInningsScoreCard.match_innings_stats.bats_score_card || [];
+
+              const opponentOverallStats = opponentMatchInningsScoreCard.match_innings_stats.overall_stats || {};
+
+              // Get max overs from game details
+              let maxOvers = 20; // default
+              try {
+                const gameDetailsBlob = JSON.parse(match.game_details_blob || '{}');
+                const basicDetails = gameDetailsBlob.basic_match_details || {};
+                maxOvers = basicDetails.no_of_overs || 20;
+              } catch (e) {
+                // Use default
+              }
+
+              const myScore = overallStats.score || 0;
+              const myWickets = overallStats.wickets || 0;
+              const myOvers = overallStats.overs || 0;
+
+              const oppScore = opponentOverallStats.score || 0;
+              const oppWickets = opponentOverallStats.wickets || 0;
+              const oppOvers = opponentOverallStats.overs || 0;
+
+              // Determine who chased based on the logic:
+              // 1. If run difference is too much (>50), loser is chaser
+              // 2. If both players played full overs, loser is chaser
+              // 3. If both players are all out, loser is chaser
+              // 4. Any other scenario, chaser is winner
+
+              let iChased = false;
+              const runDiff = Math.abs(myScore - oppScore);
+
+              if (runDiff > 50) {
+                // Loser is chaser
+                iChased = (myResult === 'LOSS');
+              } else if (myOvers >= maxOvers && oppOvers >= maxOvers) {
+                // Both played full overs, loser is chaser
+                iChased = (myResult === 'LOSS');
+              } else if (myWickets >= 10 && oppWickets >= 10) {
+                // Both all out, loser is chaser
+                iChased = (myResult === 'LOSS');
+              } else {
+                // Winner is chaser
+                iChased = (myResult === 'WIN');
+              }
 
               const inningsRecord = {
                 matchId: match.match_id,
@@ -844,9 +896,9 @@
                 pitchType: pitchType,
                 dayNight: dayNight,
                 stadiumName: stadiumName,
-                score: overallStats.score || 0,
-                wickets: overallStats.wickets || 0,
-                overs: overallStats.overs || 0,
+                score: myScore,
+                wickets: myWickets,
+                overs: myOvers,
                 extras: overallStats.extras || 0,
                 target: gameStatsBlob.target || 0,
                 average: gameStatsBlob.average || 0,
@@ -855,7 +907,8 @@
                 sixes: gameStatsBlob.sixes || 0,
                 dotBalls: gameStatsBlob.dot_balls || 0,
                 highScore: gameStatsBlob.high_score_with_one_bat || 0,
-                batsScoreCard: batsScoreCard
+                batsScoreCard: batsScoreCard,
+                chaseBatFirst: iChased ? 'Chase' : 'Bat First'
               };
 
               inningsData.push(inningsRecord);
@@ -874,6 +927,7 @@
           stadiums: Array.from(stadiums).sort(),
           tournamentAmounts: Array.from(tournamentAmounts).sort((a, b) => parseInt(a) - parseInt(b)),
           dayNightOptions: Array.from(dayNightOptions).sort(),
+          chaseBatFirstOptions: ['Chase', 'Bat First'],
           inningsData: inningsData
         };
       };
@@ -954,14 +1008,16 @@
             setAmountFilter={setAmountFilter}
             dayNightFilter={dayNightFilter}
             setDayNightFilter={setDayNightFilter}
+            chaseBatFirstFilter={chaseBatFirstFilter}
+            setChaseBatFirstFilter={setChaseBatFirstFilter}
           />
         </>
       );
     }
 
     // Dashboard Component
-    function Dashboard({ stats, pendingMatches, activeTab, setActiveTab, pitchFilter, setPitchFilter, stadiumFilter, setStadiumFilter, amountFilter, setAmountFilter, dayNightFilter, setDayNightFilter }) {
-      const { playerData, allStats, tournamentStats, subTournamentStats, pitchStats, stadiumStats, pitchTypes, stadiums, tournamentAmounts, dayNightOptions, inningsData } = stats;
+    function Dashboard({ stats, pendingMatches, activeTab, setActiveTab, pitchFilter, setPitchFilter, stadiumFilter, setStadiumFilter, amountFilter, setAmountFilter, dayNightFilter, setDayNightFilter, chaseBatFirstFilter, setChaseBatFirstFilter }) {
+      const { playerData, allStats, tournamentStats, subTournamentStats, pitchStats, stadiumStats, pitchTypes, stadiums, tournamentAmounts, dayNightOptions, chaseBatFirstOptions, inningsData } = stats;
 
       // Get filtered stats based on pitch and stadium filters
       const getFilteredStats = (statsObj, tournamentType) => {
@@ -1164,11 +1220,29 @@
                   </select>
                 </div>
               )}
-              {(pitchFilter !== 'all' || stadiumFilter !== 'all' || amountFilter !== 'all' || dayNightFilter !== 'all') && (
+              {activeTab === 'innings' && (
+                <div>
+                  <label className="form-label">
+                    <i className="fas fa-running"></i> Chase/Bat First
+                  </label>
+                  <select
+                    className="form-input"
+                    value={chaseBatFirstFilter}
+                    onChange={(e) => setChaseBatFirstFilter(e.target.value)}
+                    style={{ padding: '12px' }}
+                  >
+                    <option value="all">All</option>
+                    {chaseBatFirstOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {(pitchFilter !== 'all' || stadiumFilter !== 'all' || amountFilter !== 'all' || dayNightFilter !== 'all' || chaseBatFirstFilter !== 'all') && (
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                   <button
                     className="btn"
-                    onClick={() => { setPitchFilter('all'); setStadiumFilter('all'); setAmountFilter('all'); setDayNightFilter('all'); }}
+                    onClick={() => { setPitchFilter('all'); setStadiumFilter('all'); setAmountFilter('all'); setDayNightFilter('all'); setChaseBatFirstFilter('all'); }}
                     style={{ background: 'rgba(239, 68, 68, 0.8)', padding: '12px 24px', fontSize: '0.9rem' }}
                   >
                     <i className="fas fa-times"></i> Clear Filters
@@ -1185,6 +1259,7 @@
               <StatsTable
                 stats={filteredStats}
                 playerData={playerData}
+                inningsData={inningsData}
               />
             </div>
           )}
@@ -1215,6 +1290,7 @@
               <StatsTable
                 stats={filteredStats}
                 playerData={playerData}
+                inningsData={inningsData}
               />
             </div>
           )}
@@ -1245,6 +1321,7 @@
               <StatsTable
                 stats={filteredStats}
                 playerData={playerData}
+                inningsData={inningsData}
               />
             </div>
           )}
@@ -1256,11 +1333,13 @@
               stadiumFilter={stadiumFilter}
               amountFilter={amountFilter}
               dayNightFilter={dayNightFilter}
+              chaseBatFirstFilter={chaseBatFirstFilter}
               playerData={playerData}
               pitchTypes={pitchTypes}
               stadiums={stadiums}
               tournamentAmounts={tournamentAmounts}
               dayNightOptions={dayNightOptions}
+              chaseBatFirstOptions={chaseBatFirstOptions}
             />
           )}
 
@@ -1279,7 +1358,7 @@
     }
 
     // Innings Analysis Component
-    function InningsAnalysis({ inningsData, pitchFilter, stadiumFilter, amountFilter, dayNightFilter, playerData, pitchTypes, stadiums, tournamentAmounts, dayNightOptions }) {
+    function InningsAnalysis({ inningsData, pitchFilter, stadiumFilter, amountFilter, dayNightFilter, chaseBatFirstFilter, playerData, pitchTypes, stadiums, tournamentAmounts, dayNightOptions, chaseBatFirstOptions }) {
       // Filter innings data based on selected filters
       const getFilteredInnings = () => {
         return inningsData.filter(innings => {
@@ -1287,6 +1366,7 @@
           if (stadiumFilter !== 'all' && innings.stadiumName !== stadiumFilter) return false;
           if (amountFilter !== 'all' && innings.tournamentAmount !== amountFilter) return false;
           if (dayNightFilter !== 'all' && innings.dayNight !== dayNightFilter) return false;
+          if (chaseBatFirstFilter !== 'all' && innings.chaseBatFirst !== chaseBatFirstFilter) return false;
           return true;
         });
       };
@@ -1440,6 +1520,7 @@
                       <th><i className="fas fa-seedling"></i> Pitch</th>
                       <th><i className="fas fa-building"></i> Stadium</th>
                       <th><i className="fas fa-sun"></i> Day/Night</th>
+                      <th><i className="fas fa-running"></i> Chase/Bat First</th>
                       <th><i className="fas fa-cricket-bat-ball"></i> Score</th>
                       <th><i className="fas fa-bullseye"></i> Opponent Score</th>
                       <th><i className="fas fa-tachometer-alt"></i> SR</th>
@@ -1461,6 +1542,19 @@
                           <td>{innings.pitchType}</td>
                           <td>{innings.stadiumName}</td>
                           <td>{innings.dayNight}</td>
+                          <td>
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              background: innings.chaseBatFirst === 'Chase' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                              color: innings.chaseBatFirst === 'Chase' ? '#c084fc' : '#a5b4fc',
+                              border: innings.chaseBatFirst === 'Chase' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(99, 102, 241, 0.4)'
+                            }}>
+                              {innings.chaseBatFirst}
+                            </span>
+                          </td>
                           <td className="stat-number total">{innings.score}/{innings.wickets} ({innings.overs})</td>
                           <td className="stat-number">{innings.target || '-'}</td>
                           <td className="stat-number">{innings.strikeRate.toFixed(1)}</td>
@@ -1490,7 +1584,8 @@
     }
 
     // Stats Table Component
-    function StatsTable({ stats, playerData }) {
+    function StatsTable({ stats, playerData, inningsData }) {
+      const [expandedOpponent, setExpandedOpponent] = React.useState(null);
       const sortedStats = Object.entries(stats).sort((a, b) => b[1].total - a[1].total);
 
       if (sortedStats.length === 0) {
@@ -1514,6 +1609,7 @@
                 <th><i className="fas fa-trophy"></i> Wins</th>
                 <th><i className="fas fa-times-circle"></i> Losses</th>
                 <th><i className="fas fa-chart-line"></i> Win Rate</th>
+                <th><i className="fas fa-list"></i> Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1522,34 +1618,169 @@
                 const rateClass = winRate >= 70 ? 'win-rate-high' :
                   winRate >= 40 ? 'win-rate-medium' : 'win-rate-low';
                 const opponentPic = playerData.opponentPics[opponent] || '';
+                const isExpanded = expandedOpponent === opponent;
+
+                // Filter matches for this opponent
+                const opponentMatches = inningsData ? inningsData.filter(match => match.opponentName === opponent) : [];
 
                 return (
-                  <tr key={opponent}>
-                    <td>
-                      <div className="player-matchup">
-                        {playerData.playerPicUrl ? (
-                          <img src={playerData.playerPicUrl} className="avatar" alt={playerData.playerName} />
-                        ) : (
-                          <div className="avatar-fallback">{playerData.playerName?.[0] || 'P'}</div>
-                        )}
-                        <span className="vs-indicator">VS</span>
-                        {opponentPic ? (
-                          <img src={opponentPic} className="avatar" alt={opponent} />
-                        ) : (
-                          <div className="avatar-fallback">{opponent[0] || 'O'}</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="opponent-name">{opponent}</td>
-                    <td className="stat-number total">{s.total}</td>
-                    <td className="stat-number wins">{s.wins}</td>
-                    <td className="stat-number losses">{s.losses}</td>
-                    <td>
-                      <span className={`win-rate-badge ${rateClass}`}>
-                        {winRate.toFixed(1)}%
-                      </span>
-                    </td>
-                  </tr>
+                  <React.Fragment key={opponent}>
+                    <tr>
+                      <td>
+                        <div className="player-matchup">
+                          {playerData.playerPicUrl ? (
+                            <img src={playerData.playerPicUrl} className="avatar" alt={playerData.playerName} />
+                          ) : (
+                            <div className="avatar-fallback">{playerData.playerName?.[0] || 'P'}</div>
+                          )}
+                          <span className="vs-indicator">VS</span>
+                          {opponentPic ? (
+                            <img src={opponentPic} className="avatar" alt={opponent} />
+                          ) : (
+                            <div className="avatar-fallback">{opponent[0] || 'O'}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="opponent-name">{opponent}</td>
+                      <td className="stat-number total">{s.total}</td>
+                      <td className="stat-number wins">{s.wins}</td>
+                      <td className="stat-number losses">{s.losses}</td>
+                      <td>
+                        <span className={`win-rate-badge ${rateClass}`}>
+                          {winRate.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => setExpandedOpponent(isExpanded ? null : opponent)}
+                          style={{
+                            padding: '8px 16px',
+                            background: 'rgba(99, 102, 241, 0.2)',
+                            border: '1px solid rgba(99, 102, 241, 0.4)',
+                            borderRadius: '8px',
+                            color: '#a5b4fc',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+                          {isExpanded ? 'Hide' : 'Show'} Matches
+                        </button>
+                      </td>
+                    </tr>
+
+                    {isExpanded && opponentMatches.length > 0 && (
+                      <tr>
+                        <td colSpan="7" style={{ padding: 0, background: 'rgba(0, 0, 0, 0.3)' }}>
+                          <div style={{ padding: '20px' }}>
+                            <h4 style={{
+                              color: '#f1f5f9',
+                              marginBottom: '16px',
+                              fontSize: '1rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <i className="fas fa-history"></i> All Matches vs {opponent} ({opponentMatches.length})
+                            </h4>
+
+                            <div className="table-container" style={{ margin: 0, borderRadius: '8px' }}>
+                              <table className="data-table" style={{ fontSize: '0.85rem' }}>
+                                <thead>
+                                  <tr>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-calendar"></i> Date</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-trophy"></i> Tournament</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-seedling"></i> Pitch</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-building"></i> Stadium</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-sun"></i> Day/Night</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-cricket-bat-ball"></i> Score</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-bullseye"></i> Target</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-tachometer-alt"></i> SR</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-check-circle"></i> Result</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {opponentMatches.map((match, idx) => {
+                                    const resultClass = match.result === 'WIN' ? 'wins' : 'losses';
+                                    const dateStr = new Date(match.date).toLocaleDateString();
+
+                                    return (
+                                      <tr key={idx}>
+                                        <td style={{ padding: '12px' }}>{dateStr}</td>
+                                        <td style={{ padding: '12px', fontSize: '0.75rem' }}>{match.subTournamentKey}</td>
+                                        <td style={{ padding: '12px' }}>{match.pitchType}</td>
+                                        <td style={{ padding: '12px' }}>{match.stadiumName}</td>
+                                        <td style={{ padding: '12px' }}>{match.dayNight}</td>
+                                        <td className="stat-number total" style={{ padding: '12px' }}>
+                                          {match.score}/{match.wickets} ({match.overs})
+                                        </td>
+                                        <td className="stat-number" style={{ padding: '12px' }}>{match.target || '-'}</td>
+                                        <td className="stat-number" style={{ padding: '12px' }}>{match.strikeRate.toFixed(1)}</td>
+                                        <td style={{ padding: '12px' }}>
+                                          <span className={`stat-number ${resultClass}`}>{match.result}</span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Summary Stats for this opponent */}
+                            <div style={{
+                              marginTop: '16px',
+                              padding: '16px',
+                              background: 'rgba(99, 102, 241, 0.05)',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(99, 102, 241, 0.2)'
+                            }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+                                {(() => {
+                                  const avgScore = opponentMatches.reduce((sum, m) => sum + m.score, 0) / opponentMatches.length;
+                                  const avgSR = opponentMatches.reduce((sum, m) => sum + m.strikeRate, 0) / opponentMatches.length;
+                                  const highestScore = Math.max(...opponentMatches.map(m => m.score));
+
+                                  return (
+                                    <>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Avg Score</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {avgScore.toFixed(1)}
+                                        </div>
+                                      </div>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Avg Strike Rate</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {avgSR.toFixed(1)}
+                                        </div>
+                                      </div>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Highest Score</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {highestScore}
+                                        </div>
+                                      </div>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Win Rate</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {winRate.toFixed(0)}%
+                                        </div>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
