@@ -539,6 +539,7 @@
       const [error, setError] = useState('');
       const [matchData, setMatchData] = useState([]);
       const [stats, setStats] = useState(null);
+      const [pendingMatches, setPendingMatches] = useState([]);
       const [activeTab, setActiveTab] = useState('all');
       const [pitchFilter, setPitchFilter] = useState('all');
       const [stadiumFilter, setStadiumFilter] = useState('all');
@@ -562,6 +563,10 @@
           setLoadingStatus('Analyzing statistics...');
           const calculatedStats = calculateStatistics(allMatches);
           setStats(calculatedStats);
+
+          setLoadingStatus('Fetching pending matches...');
+          const pending = await fetchPendingMatches(accessToken);
+          setPendingMatches(pending);
 
           setIsAuthenticated(true);
         } catch (err) {
@@ -626,6 +631,34 @@
 
         const data = await response.json();
         return data.match_details || [];
+      };
+
+      const fetchPendingMatches = async (token) => {
+        const PENDING_API_URL = 'https://ibc-backend-pe-prod-apis.ibcricket.com/api/ar_vr_match/player/pending/matches/';
+
+        const requestData = {
+          data: JSON.stringify(JSON.stringify({
+            offset: 0,
+            limit: 10
+          })),
+          clientKeyDetailsId: 1
+        };
+
+        const response = await fetch(PENDING_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.matches || [];
       };
 
       const calculateStatistics = (matches) => {
@@ -910,6 +943,7 @@
           <div className="background-pattern"></div>
           <Dashboard
             stats={stats}
+            pendingMatches={pendingMatches}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             pitchFilter={pitchFilter}
@@ -926,7 +960,7 @@
     }
 
     // Dashboard Component
-    function Dashboard({ stats, activeTab, setActiveTab, pitchFilter, setPitchFilter, stadiumFilter, setStadiumFilter, amountFilter, setAmountFilter, dayNightFilter, setDayNightFilter }) {
+    function Dashboard({ stats, pendingMatches, activeTab, setActiveTab, pitchFilter, setPitchFilter, stadiumFilter, setStadiumFilter, amountFilter, setAmountFilter, dayNightFilter, setDayNightFilter }) {
       const { playerData, allStats, tournamentStats, subTournamentStats, pitchStats, stadiumStats, pitchTypes, stadiums, tournamentAmounts, dayNightOptions, inningsData } = stats;
 
       // Get filtered stats based on pitch and stadium filters
@@ -1051,6 +1085,12 @@
               onClick={() => setActiveTab('innings')}
             >
               <i className="fas fa-cricket-bat-ball"></i> Innings Analysis
+            </button>
+            <button
+              className={`nav-tab ${activeTab === 'today' ? 'active' : ''}`}
+              onClick={() => setActiveTab('today')}
+            >
+              <i className="fas fa-calendar-day"></i> My Matches Today
             </button>
           </div>
 
@@ -1221,6 +1261,17 @@
               stadiums={stadiums}
               tournamentAmounts={tournamentAmounts}
               dayNightOptions={dayNightOptions}
+            />
+          )}
+
+          {activeTab === 'today' && (
+            <MyMatchesToday
+              pendingMatches={pendingMatches}
+              playerData={playerData}
+              pitchStats={pitchStats}
+              stadiumStats={stadiumStats}
+              allStats={allStats}
+              inningsData={inningsData}
             />
           )}
         </div>
@@ -1503,6 +1554,502 @@
               })}
             </tbody>
           </table>
+        </div>
+      );
+    }
+
+    // My Matches Today Component
+    function MyMatchesToday({ pendingMatches, playerData, pitchStats, stadiumStats, allStats, inningsData }) {
+      const [expandedMatch, setExpandedMatch] = React.useState(null);
+
+      if (!pendingMatches || pendingMatches.length === 0) {
+        return (
+          <div className="glass-card tournament-content">
+            <h2 className="section-title">
+              <i className="fas fa-calendar-day"></i>
+              My Matches Today
+            </h2>
+            <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+              <i className="fas fa-calendar-check" style={{ fontSize: '3rem', marginBottom: '16px' }}></i>
+              <h3>No Pending Matches</h3>
+              <p>You don't have any pending matches at the moment.</p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="glass-card tournament-content">
+          <h2 className="section-title">
+            <i className="fas fa-calendar-day"></i>
+            My Matches Today ({pendingMatches.length})
+          </h2>
+
+          <div style={{ display: 'grid', gap: '24px' }}>
+            {pendingMatches.map((matchData, index) => {
+              const match = matchData.match;
+              const baseDetails = match.base_match_details;
+              const tournamentDetails = match.match_tournament_details;
+              const participants = matchData.participant_users || [];
+
+              // Find opponent
+              const myUserId = playerData.playerId;
+              const opponentData = participants.find(p =>
+                p.users && p.users.length > 0 && p.users[0].user_id !== myUserId
+              );
+              const opponent = opponentData?.users?.[0];
+              const opponentName = opponent?.name || 'Unknown';
+              const opponentPic = opponent?.pic_url || '';
+
+              // Get match conditions
+              const pitchType = baseDetails.pitch_type || 'NORMAL';
+              const stadiumName = baseDetails.stadium_details?.name || 'Unknown';
+              const weatherCondition = baseDetails.weather_condition || 'DAY';
+              const tournamentName = tournamentDetails?.tournament_type_details?.tournament_name || 'Unknown';
+              const roundName = tournamentDetails?.round_display_name || '';
+              const expiryHours = baseDetails.expiry_in_secs ? Math.floor(baseDetails.expiry_in_secs / 3600) : 0;
+              const expiryMinutes = baseDetails.expiry_in_secs ? Math.floor((baseDetails.expiry_in_secs % 3600) / 60) : 0;
+
+              // Get H2H stats
+              const h2hStats = allStats[opponentName] || { wins: 0, losses: 0, total: 0 };
+              const h2hWinRate = h2hStats.total > 0 ? (h2hStats.wins / h2hStats.total * 100) : 0;
+
+              // Get pitch+stadium combined stats
+              const pitchConditionStats = pitchStats[pitchType] || {};
+              const stadiumConditionStats = stadiumStats[stadiumName] || {};
+
+              // Calculate overall performance on this pitch
+              const pitchRecord = Object.values(pitchConditionStats).reduce((acc, stat) => ({
+                wins: acc.wins + stat.wins,
+                losses: acc.losses + stat.losses,
+                total: acc.total + stat.total
+              }), { wins: 0, losses: 0, total: 0 });
+
+              const pitchWinRate = pitchRecord.total > 0 ? (pitchRecord.wins / pitchRecord.total * 100) : 0;
+
+              // Calculate overall performance on this stadium
+              const stadiumRecord = Object.values(stadiumConditionStats).reduce((acc, stat) => ({
+                wins: acc.wins + stat.wins,
+                losses: acc.losses + stat.losses,
+                total: acc.total + stat.total
+              }), { wins: 0, losses: 0, total: 0 });
+
+              const stadiumWinRate = stadiumRecord.total > 0 ? (stadiumRecord.wins / stadiumRecord.total * 100) : 0;
+
+              return (
+                <div key={index} className="glass-card" style={{
+                  padding: '24px',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  borderLeft: '4px solid #6366f1'
+                }}>
+                  {/* Match Header */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.25rem', color: '#f1f5f9', marginBottom: '4px' }}>
+                          {tournamentName}
+                        </h3>
+                        {roundName && (
+                          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                            <i className="fas fa-trophy"></i> {roundName}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          border: '1px solid rgba(239, 68, 68, 0.4)',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          color: '#fca5a5',
+                          fontSize: '0.875rem',
+                          fontWeight: '600'
+                        }}>
+                          <i className="fas fa-clock"></i> Expires in {expiryHours}h {expiryMinutes}m
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* VS Section */}
+                  <div style={{
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px' }}>
+                      {/* You */}
+                      <div style={{ textAlign: 'center' }}>
+                        {playerData.playerPicUrl ? (
+                          <img src={playerData.playerPicUrl} style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            border: '3px solid #6366f1',
+                            marginBottom: '12px'
+                          }} alt={playerData.playerName} />
+                        ) : (
+                          <div style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '2rem',
+                            fontWeight: '700',
+                            marginBottom: '12px',
+                            border: '3px solid #6366f1'
+                          }}>
+                            {playerData.playerName?.[0] || 'P'}
+                          </div>
+                        )}
+                        <div style={{ color: '#f1f5f9', fontWeight: '600' }}>{playerData.playerName}</div>
+                        <div style={{ color: '#6366f1', fontSize: '0.75rem', marginTop: '4px' }}>YOU</div>
+                      </div>
+
+                      {/* VS Badge */}
+                      <div style={{
+                        background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        fontSize: '1.5rem',
+                        fontWeight: '700',
+                        color: 'white',
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+                      }}>
+                        VS
+                      </div>
+
+                      {/* Opponent */}
+                      <div style={{ textAlign: 'center' }}>
+                        {opponentPic ? (
+                          <img src={opponentPic} style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            border: '3px solid #ec4899',
+                            marginBottom: '12px'
+                          }} alt={opponentName} />
+                        ) : (
+                          <div style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '2rem',
+                            fontWeight: '700',
+                            marginBottom: '12px',
+                            border: '3px solid #ec4899'
+                          }}>
+                            {opponentName[0] || 'O'}
+                          </div>
+                        )}
+                        <div style={{ color: '#f1f5f9', fontWeight: '600' }}>{opponentName}</div>
+                        <div style={{ color: '#ec4899', fontSize: '0.75rem', marginTop: '4px' }}>OPPONENT</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Match Conditions */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    gap: '12px',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '4px' }}>
+                        <i className="fas fa-seedling"></i> PITCH
+                      </div>
+                      <div style={{ color: '#f1f5f9', fontWeight: '600', fontSize: '0.9rem' }}>
+                        {pitchType}
+                      </div>
+                    </div>
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '4px' }}>
+                        <i className="fas fa-building"></i> STADIUM
+                      </div>
+                      <div style={{ color: '#f1f5f9', fontWeight: '600', fontSize: '0.9rem' }}>
+                        {stadiumName}
+                      </div>
+                    </div>
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '4px' }}>
+                        <i className="fas fa-sun"></i> TIME
+                      </div>
+                      <div style={{ color: '#f1f5f9', fontWeight: '600', fontSize: '0.9rem' }}>
+                        {weatherCondition}
+                      </div>
+                    </div>
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '4px' }}>
+                        <i className="fas fa-cricket-bat-ball"></i> OVERS
+                      </div>
+                      <div style={{ color: '#f1f5f9', fontWeight: '600', fontSize: '0.9rem' }}>
+                        {baseDetails.match_overs || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance Stats */}
+                  <div style={{
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    padding: '20px',
+                    borderRadius: '12px'
+                  }}>
+                    <h4 style={{
+                      fontSize: '1rem',
+                      color: '#f1f5f9',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <i className="fas fa-chart-line"></i> Your Performance Stats
+                    </h4>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                      {/* H2H Stats */}
+                      <div style={{
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(99, 102, 241, 0.3)'
+                      }}>
+                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '8px' }}>
+                          <i className="fas fa-users"></i> HEAD-TO-HEAD vs {opponentName}
+                        </div>
+                        {h2hStats.total > 0 ? (
+                          <>
+                            <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#f1f5f9', marginBottom: '4px' }}>
+                              {h2hWinRate.toFixed(0)}%
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+                              {h2hStats.wins}W - {h2hStats.losses}L ({h2hStats.total} matches)
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ fontSize: '0.875rem', color: '#64748b', fontStyle: 'italic' }}>
+                            No previous matches
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pitch Stats */}
+                      <div style={{
+                        background: 'rgba(34, 197, 94, 0.1)',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(34, 197, 94, 0.3)'
+                      }}>
+                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '8px' }}>
+                          <i className="fas fa-seedling"></i> ON {pitchType} PITCH
+                        </div>
+                        {pitchRecord.total > 0 ? (
+                          <>
+                            <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#f1f5f9', marginBottom: '4px' }}>
+                              {pitchWinRate.toFixed(0)}%
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+                              {pitchRecord.wins}W - {pitchRecord.losses}L ({pitchRecord.total} matches)
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ fontSize: '0.875rem', color: '#64748b', fontStyle: 'italic' }}>
+                            No history on this pitch
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Stadium Stats */}
+                      <div style={{
+                        background: 'rgba(236, 72, 153, 0.1)',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(236, 72, 153, 0.3)'
+                      }}>
+                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '8px' }}>
+                          <i className="fas fa-building"></i> AT {stadiumName}
+                        </div>
+                        {stadiumRecord.total > 0 ? (
+                          <>
+                            <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#f1f5f9', marginBottom: '4px' }}>
+                              {stadiumWinRate.toFixed(0)}%
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+                              {stadiumRecord.wins}W - {stadiumRecord.losses}L ({stadiumRecord.total} matches)
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ fontSize: '0.875rem', color: '#64748b', fontStyle: 'italic' }}>
+                            No history at this stadium
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Previous Matches in Same Conditions - Expandable Section */}
+                  {(() => {
+                    // Filter innings for same pitch and stadium
+                    const matchingInnings = inningsData.filter(innings =>
+                      innings.pitchType === pitchType && innings.stadiumName === stadiumName
+                    );
+
+                    if (matchingInnings.length === 0) return null;
+
+                    const isExpanded = expandedMatch === index;
+
+                    return (
+                      <div style={{ marginTop: '16px' }}>
+                        <button
+                          onClick={() => setExpandedMatch(isExpanded ? null : index)}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            background: 'rgba(99, 102, 241, 0.1)',
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                            borderRadius: '8px',
+                            color: '#a5b4fc',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span>
+                            <i className={`fas fa-history`}></i> Previous Matches in {stadiumName} ({pitchType}) - {matchingInnings.length} matches
+                          </span>
+                          <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+                        </button>
+
+                        {isExpanded && (
+                          <div style={{
+                            marginTop: '12px',
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            borderRadius: '8px',
+                            overflow: 'hidden'
+                          }}>
+                            <div className="table-container" style={{ margin: 0, borderRadius: '8px' }}>
+                              <table className="data-table" style={{ fontSize: '0.8rem' }}>
+                                <thead>
+                                  <tr>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-calendar"></i> Date</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-user"></i> Opponent</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-trophy"></i> Tournament</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-sun"></i> Day/Night</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-cricket-bat-ball"></i> Score</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-bullseye"></i> Target</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-tachometer-alt"></i> SR</th>
+                                    <th style={{ padding: '12px' }}><i className="fas fa-check-circle"></i> Result</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {matchingInnings.map((innings, idx) => {
+                                    const resultClass = innings.result === 'WIN' ? 'wins' : 'losses';
+                                    const dateStr = new Date(innings.date).toLocaleDateString();
+
+                                    return (
+                                      <tr key={idx}>
+                                        <td style={{ padding: '12px' }}>{dateStr}</td>
+                                        <td className="opponent-name" style={{ padding: '12px' }}>{innings.opponentName}</td>
+                                        <td style={{ padding: '12px', fontSize: '0.75rem' }}>{innings.subTournamentKey}</td>
+                                        <td style={{ padding: '12px' }}>{innings.dayNight}</td>
+                                        <td className="stat-number total" style={{ padding: '12px' }}>
+                                          {innings.score}/{innings.wickets} ({innings.overs})
+                                        </td>
+                                        <td className="stat-number" style={{ padding: '12px' }}>{innings.target || '-'}</td>
+                                        <td className="stat-number" style={{ padding: '12px' }}>{innings.strikeRate.toFixed(1)}</td>
+                                        <td style={{ padding: '12px' }}>
+                                          <span className={`stat-number ${resultClass}`}>{innings.result}</span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Summary Stats */}
+                            <div style={{
+                              padding: '16px',
+                              background: 'rgba(99, 102, 241, 0.05)',
+                              borderTop: '1px solid rgba(99, 102, 241, 0.2)'
+                            }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                                {(() => {
+                                  const wins = matchingInnings.filter(i => i.result === 'WIN').length;
+                                  const losses = matchingInnings.filter(i => i.result === 'LOSS').length;
+                                  const winRate = matchingInnings.length > 0 ? (wins / matchingInnings.length * 100) : 0;
+                                  const avgScore = matchingInnings.reduce((sum, i) => sum + i.score, 0) / matchingInnings.length;
+                                  const avgSR = matchingInnings.reduce((sum, i) => sum + i.strikeRate, 0) / matchingInnings.length;
+
+                                  return (
+                                    <>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Win Rate</div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {winRate.toFixed(0)}%
+                                        </div>
+                                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{wins}W - {losses}L</div>
+                                      </div>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Avg Score</div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {avgScore.toFixed(1)}
+                                        </div>
+                                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Per Match</div>
+                                      </div>
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>Avg Strike Rate</div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                          {avgSR.toFixed(1)}
+                                        </div>
+                                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Overall</div>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
     }
